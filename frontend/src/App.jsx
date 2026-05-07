@@ -1,19 +1,51 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 
+import RegisterPage from "./pages/RegisterPage";
+import LoginPage from "./pages/LoginPage";
+import { getSession, logout, onAuthChange } from './auth/authService';
+
 function App() {
-  const [data, setData] = useState(null);
+  const [session, setSession] = useState(null);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/")
-    .then(res => res.json())
-    .then(data => setData(data));
+    async function loadSession() {
+      const { data } = await getSession();
+      setSession(data.session);
+    }
+
+    loadSession();
+
+    const { data } = onAuthChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => {
+      data.subscription.unsubscribe();
+    };
   }, []);
+
+  async function handleLogout() {
+    await logout();
+    setSession(null);
+  }
+
 
   return (
     <div>
-      <h1>Frontend</h1>
-      <pre>{JSON.stringify(data, null, 2)}</pre>
+      <h1>Gameify Life Authentication</h1>
+      {session ? (
+        <div>
+          <p>Logged in as: {session.user.email}</p>
+          <button onClick={handleLogout}>Logout</button>
+        </div>
+      ): (
+        <div>
+          <RegisterPage />
+          <LoginPage />
+        </div>
+      )}
+
     </div>
 
   )
