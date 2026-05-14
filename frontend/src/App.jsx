@@ -4,9 +4,13 @@ import './App.css'
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import { getSession, logout, onAuthChange } from './auth/authService';
+import { sendSession } from './api/profileApi';
+import ProfilePage from './pages/ProfilePage';
 
 function App() {
   const [session, setSession] = useState(null);
+  const [profile, setProfile] = useState(null);
+
 
   useEffect(() => {
     async function loadSession() {
@@ -25,11 +29,25 @@ function App() {
     };
   }, []);
 
+  // Loads profile when session exists
+  useEffect(() => {
+    async function loadProfile() {
+      if (!session) {
+        setProfile(null);
+        return;
+      }
+
+      const data = await sendSession(session);
+      setProfile(data);
+    }
+
+    loadProfile();
+  }, [session])
+
   async function handleLogout() {
     await logout();
     setSession(null);
   }
-
 
   return (
     <div>
@@ -38,8 +56,9 @@ function App() {
         <div>
           <p>Logged in as: {session.user.email}</p>
           <button onClick={handleLogout}>Logout</button>
+          <ProfilePage profile={profile} />
         </div>
-      ): (
+      ) : (
         <div>
           <RegisterPage />
           <LoginPage />
